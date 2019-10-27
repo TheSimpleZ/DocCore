@@ -3,9 +3,8 @@ using System.Linq;
 
 namespace ServiceBlock.Extensions
 {
-    /// <summary>
-    /// Test summary
-    /// </summary>
+    // Hello world
+    // Foo bar
     public static class ResourceExtensions
     {
         public static string GetServiceName(this Type resource)
