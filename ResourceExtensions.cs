@@ -6,13 +6,17 @@ namespace ServiceBlock.Extensions
     public class ResourceExtensions
     {
 
-        // knas
+        public int MyProperty { get; set; }
+        public string Prop => "";
+        // Returns: The name of the service
         public ResourceExtensions(string apa)
         {
 
         }
 
-
+        // Summary: asdasd
+        // Parameters:
+        //   apa: A monkey
         public ResourceExtensions(int apa)
         {
 

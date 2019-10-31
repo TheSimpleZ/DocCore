@@ -5,6 +5,8 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using DocCore.DocProvider;
+using Buildalyzer;
+using System.Threading.Tasks;
 
 namespace DocCore
 {
@@ -12,20 +14,46 @@ namespace DocCore
     {
         static void Main(string[] args)
         {
-            var path = @"ResourceExtensions.cs";
-            using var stream = File.OpenRead(path);
+            var projects = new AnalyzerManager(args[0]).Projects;
 
-            var tree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: path);
-            var root = (CompilationUnitSyntax)tree.GetRoot();
-            var docProvider = new CSharpDocProvider(tree);
+            foreach (var project in projects)
+            {
+                var projectName = Path.GetFileNameWithoutExtension(project.Key);
+                var analyzer = project.Value;
 
-            var classNode = docProvider.Namespaces.SelectMany(docProvider.GetClasses).First();
 
-            Console.WriteLine(docProvider.GetMarkdownDocs(classNode));
+                var result = analyzer.Build().Single();
 
-            using var writer = File.CreateText($"{Directory.GetCurrentDirectory()}/doc.md");
+                var files = result.SourceFiles;
 
-            writer.Write(docProvider.GetMarkdownDocs(classNode));
+                Parallel.ForEach(files, file =>
+                {
+                    using var stream = File.OpenRead(file);
+
+                    var tree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file);
+                    var root = (CompilationUnitSyntax)tree.GetRoot();
+                    var docProvider = new CSharpDocProvider(tree);
+
+
+                    var classNodes = docProvider.Namespaces.SelectMany(docProvider.GetClasses);
+
+                    Parallel.ForEach(classNodes, classNode =>
+                    {
+                        string dir = Path.Combine(Directory.GetCurrentDirectory(), "docs", projectName, docProvider.GetNamespace(classNode).Name.ToString());
+                        if (!Directory.Exists(dir))  // if it doesn't exist, create
+                            Directory.CreateDirectory(dir);
+
+                        using var writer = File.CreateText(Path.Combine(dir, Path.GetFileNameWithoutExtension(file) + ".md"));
+
+                        writer.Write(docProvider.GetMarkdownDocs(classNode));
+                    });
+
+                });
+
+            }
+
+
+
 
         }
     }
