@@ -35,7 +35,7 @@ namespace DocCore
                     var docProvider = new CSharpDocProvider(tree);
 
 
-                    var classNodes = docProvider.Namespaces.SelectMany(docProvider.GetClasses);
+                    var classNodes = docProvider.Namespaces.SelectMany(docProvider.GetClasses).Where(CSharpDocProvider.IsPublic);
 
                     Parallel.ForEach(classNodes, classNode =>
                     {

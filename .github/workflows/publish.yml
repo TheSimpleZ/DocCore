@@ -1,0 +1,22 @@
+name: Pack and publish dotnet core library
+
+on:
+  push:
+    tags:
+      - 1.*
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "3.0.100"
+      - name: Pack nugets
+        run: dotnet pack -c Release -o output /p:PackageVersion=$(basename $GITHUB_REF)
+      - name: Publish packages
+        env:
+          nuget_key: ${{ secrets.NugetKey }}
+        run: dotnet nuget push output/**/*.nupkg -k $nuget_key -s https://api.nuget.org/v3/index.json || exit 0

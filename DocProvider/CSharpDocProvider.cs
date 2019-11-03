@@ -75,7 +75,7 @@ $@"{node.Identifier}
 
         private string GetClassConstructorList(ClassDeclarationSyntax node)
         {
-            var constructors = node.Members.OfType<ConstructorDeclarationSyntax>();
+            var constructors = node.Members.OfType<ConstructorDeclarationSyntax>().Where(IsPublic);
             if (!constructors.Any())
                 return null;
 
@@ -102,7 +102,7 @@ $@"{node.Identifier}
 
         private string GetClassPropertyList(ClassDeclarationSyntax node)
         {
-            var properties = node.Members.OfType<PropertyDeclarationSyntax>();
+            var properties = node.Members.OfType<PropertyDeclarationSyntax>().Where(IsPublic);
             if (!properties.Any())
                 return null;
 
@@ -125,7 +125,7 @@ $@"{node.Identifier}
 
         private string GetClassMethodList(ClassDeclarationSyntax node)
         {
-            var methods = node.Members.OfType<MethodDeclarationSyntax>();
+            var methods = node.Members.OfType<MethodDeclarationSyntax>().Where(IsPublic);
             if (!methods.Any())
                 return null;
 
@@ -148,6 +148,12 @@ $@"{node.Identifier}
             }
 
             return builder.ToString();
+        }
+
+        public static bool IsPublic(dynamic classNode)
+        {
+            SyntaxTokenList modifiers = classNode.Modifiers;
+            return modifiers.Any(modifier => modifier.Kind() == SyntaxKind.PublicKeyword || modifier.Kind() == SyntaxKind.ProtectedKeyword);
         }
 
         private static string GetParameterTable(BaseMethodDeclarationSyntax syntax)

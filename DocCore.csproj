@@ -3,6 +3,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>doccore</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>
