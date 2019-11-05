@@ -7,27 +7,61 @@ using Microsoft.CodeAnalysis.Text;
 using DocCore.DocProvider;
 using Buildalyzer;
 using System.Threading.Tasks;
+using Serilog;
+using System.Collections.Generic;
+using McMaster.Extensions.CommandLineUtils;
+using DocCore.Extensions;
 
 namespace DocCore
 {
     class Program
     {
-        static void Main(string[] args)
+
+        public static int Main(string[] args)
+        => CommandLineApplication.Execute<Program>(args);
+
+        [Option(Description = "The sln file. Defaults to current directory")]
+        public string Sln { get; }
+
+        [Option(Description = "The output folder. Defaults to ./docs")]
+        public string Output { get; } = Path.Combine(Directory.GetCurrentDirectory(), "docs");
+
+        [Option(Description = "List of glob patterns to exclude projects")]
+        public string[] Exclude { get; }
+
+
+
+        private void OnExecute()
         {
-            var projects = new AnalyzerManager(args[0]).Projects;
+            var slnPath = Sln ?? Directory.GetFiles(Directory.GetCurrentDirectory()).First(f => f.EndsWith(".sln"));
+            Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
 
-            foreach (var project in projects)
+            Log.Information("Loading projects in solution");
+            var sln = new AnalyzerManager(slnPath).Projects.Where(proj => !Exclude.Any(e => proj.Key.Like(e)));
+
+            var buildResults = new List<(string projectPath, AnalyzerResult project)>();
+            foreach (var (projectPath, projectAnalyzer) in sln)
             {
-                var projectName = Path.GetFileNameWithoutExtension(project.Key);
-                var analyzer = project.Value;
+                Log.Information("Building {ProjectName}", Path.GetFileNameWithoutExtension(projectPath));
+                buildResults.Add((projectPath, projectAnalyzer.Build().Single()));
+            }
+
+            Log.Information("{ProjectCount} projects loaded", buildResults.Count());
 
 
-                var result = analyzer.Build().Single();
+            Parallel.ForEach(buildResults, buildResult =>
+            {
+                var projectName = Path.GetFileNameWithoutExtension(buildResult.projectPath);
+                Log.Information("Getting files in {ProjectName}", projectName);
 
-                var files = result.SourceFiles;
+
+                var files = buildResult.project.SourceFiles;
 
                 Parallel.ForEach(files, file =>
                 {
+                    var filename = Path.GetFileNameWithoutExtension(file);
+                    Log.Information("Generating docs for {FileName}", filename);
+
                     using var stream = File.OpenRead(file);
 
                     var tree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file);
@@ -39,18 +73,18 @@ namespace DocCore
 
                     Parallel.ForEach(classNodes, classNode =>
                     {
-                        string dir = Path.Combine(Directory.GetCurrentDirectory(), "docs", projectName, docProvider.GetNamespace(classNode).Name.ToString());
+                        string dir = Path.Combine(Output, projectName, docProvider.GetNamespace(classNode).Name.ToString());
                         if (!Directory.Exists(dir))  // if it doesn't exist, create
                             Directory.CreateDirectory(dir);
 
-                        using var writer = File.CreateText(Path.Combine(dir, Path.GetFileNameWithoutExtension(file) + ".md"));
+                        using var writer = File.CreateText(Path.Combine(dir, filename + ".md"));
 
                         writer.Write(docProvider.GetMarkdownDocs(classNode));
                     });
 
                 });
 
-            }
+            });
 
 
 
