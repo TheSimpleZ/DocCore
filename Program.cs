@@ -25,7 +25,7 @@ namespace DocCore
         public string Output { get; } = Path.Combine(Directory.GetCurrentDirectory(), "docs");
 
         [Option(Description = "List of glob patterns to exclude projects")]
-        public string[] Exclude { get; }
+        public string[] Exclude { get; } = new string[] { };
 
 
 
