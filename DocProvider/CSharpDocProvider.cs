@@ -20,155 +20,20 @@ namespace DocCore.DocProvider
             root = (CompilationUnitSyntax)tree.GetRoot();
         }
 
-        public IEnumerable<NamespaceDeclarationSyntax> Namespaces => root.Members.OfType<NamespaceDeclarationSyntax>();
-        public IEnumerable<ClassDeclarationSyntax> GetClasses(NamespaceDeclarationSyntax ns) => ns.Members.OfType<ClassDeclarationSyntax>();
+        private IEnumerable<NamespaceDeclarationSyntax> Namespaces => root.Members.OfType<NamespaceDeclarationSyntax>();
+        private IEnumerable<ClassDeclarationSyntax> GetClasses(NamespaceDeclarationSyntax ns) => ns.Members.OfType<ClassDeclarationSyntax>();
 
-        public static CommentDocs GetComment(CSharpSyntaxNode node)
+
+
+        public IEnumerable<(string @namespace, string content)> GetMarkdownDocs() => Namespaces.SelectMany(n =>
+                                                                                GetClasses(n)
+                                                                                    .Where(DocExtensions.IsPublic)
+                                                                                    .Select(c => GetMarkdownDoc(n, c)));
+
+        private (string @namespace, string content) GetMarkdownDoc(NamespaceDeclarationSyntax @namespace, ClassDeclarationSyntax node)
         {
-            var trivias = node.GetLeadingTrivia();
-            var commentTrivia = trivias.Where(t => t.Kind() == SyntaxKind.SingleLineCommentTrivia);
 
-            var commentWithoutLeadingSlashes = commentTrivia.Select(c => Regex.Replace(c.ToString(), @"^//\s?", ""));
-
-            var fullComment = string.Join("\n", commentWithoutLeadingSlashes);
-
-            var comment = new CommentDocs() { Summary = fullComment };
-            if (!string.IsNullOrEmpty(fullComment))
-            {
-                try
-                {
-                    comment = new Deserializer().Deserialize<CommentDocs>(fullComment);
-                }
-                catch (YamlException)
-                { }
-            }
-
-            return comment;
-        }
-
-
-        public string GetMarkdownDocs(ClassDeclarationSyntax node)
-        {
-            var _namespace = GetNamespace(node);
-            return (
-$@"{node.Identifier}
-======
-##### Namespace: {_namespace.Name}
-
-{GetComment(node).Summary}
-
-
-{node.GetDeclaration()}
-
-
-{GetClassConstructorList(node)}
-
-{GetClassPropertyList(node)}
-
-{GetClassMethodList(node)}
-
-
-");
-        }
-
-        public NamespaceDeclarationSyntax GetNamespace(ClassDeclarationSyntax node) => node.Ancestors().OfType<NamespaceDeclarationSyntax>().Single();
-
-        private string GetClassConstructorList(ClassDeclarationSyntax node)
-        {
-            var constructors = node.Members.OfType<ConstructorDeclarationSyntax>().Where(IsPublic);
-            if (!constructors.Any())
-                return null;
-
-
-            var builder = new StringBuilder("# Constructors\n");
-
-            foreach (var ctor in constructors)
-            {
-                var paramTypes = string.Join(", ", ctor.GetParameterTypes());
-                var commentDocs = GetComment(ctor);
-                builder.AppendLine($"{ctor.Identifier}({paramTypes})");
-                builder.AppendLine("------");
-                builder.AppendLine(commentDocs.Summary);
-                builder.AppendLine(ctor.GetDeclaration());
-                builder.AppendLine(GetParameterTable(ctor));
-                if (!string.IsNullOrEmpty(commentDocs.Returns))
-                    builder.AppendLine($"**Returns:** {commentDocs.Returns}");
-                builder.AppendLine();
-
-            }
-
-            return builder.ToString();
-        }
-
-        private string GetClassPropertyList(ClassDeclarationSyntax node)
-        {
-            var properties = node.Members.OfType<PropertyDeclarationSyntax>().Where(IsPublic);
-            if (!properties.Any())
-                return null;
-
-
-            var builder = new StringBuilder("# Properties\n");
-
-            foreach (var ctor in properties)
-            {
-                var commentDocs = GetComment(ctor);
-                builder.AppendLine($"{ctor.Identifier}");
-                builder.AppendLine("------");
-                builder.AppendLine(commentDocs.Summary);
-                builder.AppendLine(ctor.GetDeclaration());
-                builder.AppendLine();
-
-            }
-
-            return builder.ToString();
-        }
-
-        private string GetClassMethodList(ClassDeclarationSyntax node)
-        {
-            var methods = node.Members.OfType<MethodDeclarationSyntax>().Where(IsPublic);
-            if (!methods.Any())
-                return null;
-
-
-            var builder = new StringBuilder("# Methods\n");
-
-            foreach (var method in methods)
-            {
-                var paramTypes = string.Join(", ", method.GetParameterTypes());
-                var commentDocs = GetComment(method);
-                builder.AppendLine($"{method.Identifier}({paramTypes})");
-                builder.AppendLine("------");
-                builder.AppendLine(commentDocs.Summary);
-                builder.AppendLine(method.GetDeclaration());
-                builder.AppendLine(GetParameterTable(method));
-                if (!string.IsNullOrEmpty(commentDocs.Returns))
-                    builder.AppendLine($"**Returns:** {commentDocs.Returns}");
-                builder.AppendLine();
-
-            }
-
-            return builder.ToString();
-        }
-
-        public static bool IsPublic(dynamic classNode)
-        {
-            SyntaxTokenList modifiers = classNode.Modifiers;
-            return modifiers.Any(modifier => modifier.Kind() == SyntaxKind.PublicKeyword || modifier.Kind() == SyntaxKind.ProtectedKeyword);
-        }
-
-        private static string GetParameterTable(BaseMethodDeclarationSyntax syntax)
-        {
-            if (!syntax.ParameterList.Parameters.Any())
-                return "";
-
-            var builder = new StringBuilder("### Parameters\n");
-            builder.AppendLine("Name | Description");
-            builder.AppendLine("--- | ---");
-            foreach (var param in syntax.ParameterList.Parameters)
-            {
-                builder.AppendLine($"{param.Identifier} | {GetComment(syntax)?.Parameters?[param.Identifier.ToString()]}");
-            }
-            return builder.ToString();
+            return (@namespace.Name.ToString(), new ClassDoc(node).ToString());
         }
     }
 }

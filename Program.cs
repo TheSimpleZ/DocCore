@@ -1,8 +1,6 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using DocCore.DocProvider;
 using Buildalyzer;
@@ -33,18 +31,14 @@ namespace DocCore
 
         private void OnExecute()
         {
-            var slnPath = Sln ?? Directory.GetFiles(Directory.GetCurrentDirectory()).First(f => f.EndsWith(".sln"));
+
             Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
 
-            Log.Information("Loading projects in solution");
+            var slnPath = Sln ?? Directory.GetFiles(Directory.GetCurrentDirectory()).First(f => f.EndsWith(".sln"));
+            Log.Information("Loading projects in {SolutionPath}", slnPath);
             var sln = new AnalyzerManager(slnPath).Projects.Where(proj => !Exclude.Any(e => proj.Key.Like(e)));
 
-            var buildResults = new List<(string projectPath, AnalyzerResult project)>();
-            foreach (var (projectPath, projectAnalyzer) in sln)
-            {
-                Log.Information("Building {ProjectName}", Path.GetFileNameWithoutExtension(projectPath));
-                buildResults.Add((projectPath, projectAnalyzer.Build().Single()));
-            }
+            var buildResults = BuildProjects(sln);
 
             Log.Information("{ProjectCount} projects loaded", buildResults.Count());
 
@@ -52,43 +46,48 @@ namespace DocCore
             Parallel.ForEach(buildResults, buildResult =>
             {
                 var projectName = Path.GetFileNameWithoutExtension(buildResult.projectPath);
+
                 Log.Information("Getting files in {ProjectName}", projectName);
-
-
                 var files = buildResult.project.SourceFiles;
 
                 Parallel.ForEach(files, file =>
                 {
                     var filename = Path.GetFileNameWithoutExtension(file);
+
                     Log.Information("Generating docs for {FileName}", filename);
+                    var docs = GetDocProvider(file).GetMarkdownDocs();
 
-                    using var stream = File.OpenRead(file);
-
-                    var tree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file);
-                    var root = (CompilationUnitSyntax)tree.GetRoot();
-                    var docProvider = new CSharpDocProvider(tree);
-
-
-                    var classNodes = docProvider.Namespaces.SelectMany(docProvider.GetClasses).Where(CSharpDocProvider.IsPublic);
-
-                    Parallel.ForEach(classNodes, classNode =>
+                    Parallel.ForEach(docs, doc =>
                     {
-                        string dir = Path.Combine(Output, projectName, docProvider.GetNamespace(classNode).Name.ToString());
-                        if (!Directory.Exists(dir))  // if it doesn't exist, create
+                        string dir = Path.Combine(Output, projectName, doc.@namespace);
+                        if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
 
                         using var writer = File.CreateText(Path.Combine(dir, filename + ".md"));
 
-                        writer.Write(docProvider.GetMarkdownDocs(classNode));
+                        writer.Write(doc.content);
                     });
-
                 });
-
             });
+        }
 
+        private static List<(string projectPath, AnalyzerResult project)> BuildProjects(IEnumerable<KeyValuePair<string, ProjectAnalyzer>> sln)
+        {
+            var buildResults = new List<(string projectPath, AnalyzerResult project)>();
+            foreach (var (projectPath, projectAnalyzer) in sln)
+            {
+                Log.Information("Building {ProjectName}", Path.GetFileNameWithoutExtension(projectPath));
+                buildResults.Add((projectPath, projectAnalyzer.Build().Single()));
+            }
 
+            return buildResults;
+        }
 
-
+        private static CSharpDocProvider GetDocProvider(string file)
+        {
+            using var stream = File.OpenRead(file);
+            var tree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file);
+            return new CSharpDocProvider(tree);
         }
     }
 }

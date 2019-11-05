@@ -10,7 +10,12 @@ namespace DocCore.Extensions
     {
         public static string GetDeclaration(this SyntaxNode node) => "```\n" + node.ToString().Split('\n').FirstOrDefault() + "\n```";
 
-        public static IEnumerable<string> GetParameterTypes(this BaseMethodDeclarationSyntax node) => node.ParameterList.Parameters.Select(p => p.Type.ToString());
+
+        public static bool IsPublic(dynamic classNode)
+        {
+            SyntaxTokenList modifiers = classNode.Modifiers;
+            return modifiers.Any(modifier => modifier.Kind() == SyntaxKind.PublicKeyword || modifier.Kind() == SyntaxKind.ProtectedKeyword);
+        }
 
     }
 }
