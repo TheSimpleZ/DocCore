@@ -59,7 +59,7 @@ namespace DocCore
 
                     Parallel.ForEach(docs, doc =>
                     {
-                        string dir = Path.Combine(Output, projectName, doc.@namespace);
+                        string dir = projectName != doc.@namespace ? Path.Combine(Output, projectName, doc.@namespace.Replace($"{projectName}.", "")) : Path.Combine(Output, projectName);
                         if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
 

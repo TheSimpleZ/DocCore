@@ -10,8 +10,8 @@
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/bin/Debug/netcoreapp3.0/DocCore.dll",
-      "args": ["../ServiceBlock/ServiceBlock.sln"],
-      "cwd": "${workspaceFolder}",
+      "args": ["-o", "${workspaceFolder}/docs"],
+      "cwd": "${workspaceFolder}/../ServiceBlock",
       "console": "internalConsole",
       "stopAtEntry": false
     },

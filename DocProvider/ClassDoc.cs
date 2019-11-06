@@ -1,13 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using DocCore.Extensions;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using YamlDotNet.Core;
-using YamlDotNet.Serialization;
 
 namespace DocCore.DocProvider
 {
@@ -40,7 +34,7 @@ namespace DocCore.DocProvider
             return (
 $@"{ClassName}
 ======
-##### Namespace: {Namespace}
+> Namespace: {Namespace}
 
 {Comment.Summary}
 
