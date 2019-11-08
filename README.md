@@ -30,7 +30,7 @@ public abstract class Storage<T> where T : AbstractResource
 
 ## Why?
 
-Because I don't like xml.
+Because I don't like xml comments.
 
 ## Installation
 
@@ -40,6 +40,6 @@ dotnet tool install -g DocCore
 
 ## How to use
 
-```
-doccore <PATH_TO_YOUR_SOLUTION_FILE>
-```
+Navigate to the folder containing your solution and run `doccore`.
+
+Run 'doccore --help' for more options.
