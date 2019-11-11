@@ -9,6 +9,7 @@ using Serilog;
 using System.Collections.Generic;
 using McMaster.Extensions.CommandLineUtils;
 using DocCore.Extensions;
+using System;
 
 namespace DocCore
 {
@@ -34,7 +35,12 @@ namespace DocCore
 
             Log.Logger = new LoggerConfiguration().WriteTo.ColoredConsole().CreateLogger();
 
-            var slnPath = Sln ?? Directory.GetFiles(Directory.GetCurrentDirectory()).First(f => f.EndsWith(".sln"));
+            var slnPath = Sln ?? Directory.GetFiles(Directory.GetCurrentDirectory()).FirstOrDefault(f => f.EndsWith(".sln"));
+            if (string.IsNullOrEmpty(slnPath))
+            {
+                Log.Fatal("Could not find a solution file in the current directory. Please navigate to a folder with a .sln file or use the -s option to specify a solution");
+                Environment.Exit(1);
+            }
             Log.Information("Loading projects in {SolutionPath}", slnPath);
             var sln = new AnalyzerManager(slnPath).Projects.Where(proj => !Exclude.Any(e => proj.Key.Like(e)));
 
@@ -63,7 +69,7 @@ namespace DocCore
                         if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
 
-                        using var writer = File.CreateText(Path.Combine(dir, filename + ".md"));
+                        using var writer = File.CreateText(Path.Combine(dir, filename + ".md").ToLowerInvariant());
 
                         writer.Write(doc.content);
                     });
