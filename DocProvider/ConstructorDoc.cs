@@ -4,10 +4,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DocCore.DocProvider
 {
-    public class DocComment : MethodDoc
+    public class ConstructorDoc : MethodDoc
     {
 
-        public DocComment(ConstructorDeclarationSyntax ctor) : base(ctor)
+        public ConstructorDoc(ConstructorDeclarationSyntax ctor) : base(ctor)
         {
             Ctor = ctor;
         }
@@ -20,8 +20,13 @@ namespace DocCore.DocProvider
 $@"{Ctor.Identifier}({ParameterTypes})
 ------
 {Comment.Summary}
+
+```
 {Declaration}
+```
+
 {ParameterTable}
+
 ";
         }
     }

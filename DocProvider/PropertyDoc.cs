@@ -18,7 +18,10 @@ namespace DocCore.DocProvider
 $@"{Prop.Identifier}
 ------
 {Comment.Summary}
+
+```
 {Declaration}
+```
 
 ";
         }

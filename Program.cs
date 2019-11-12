@@ -58,14 +58,14 @@ namespace DocCore
 
                 Parallel.ForEach(files, file =>
                 {
-                    var filename = Path.GetFileNameWithoutExtension(file).ToLowerInvariant();
+                    var filename = Path.GetFileNameWithoutExtension(file);
 
                     Log.Information("Generating docs for {FileName}", filename);
                     var docs = GetDocProvider(file).GetMarkdownDocs();
 
                     Parallel.ForEach(docs, doc =>
                     {
-                        string dir = (projectName != doc.@namespace ? Path.Combine(Output, projectName, doc.@namespace.Replace($"{projectName}.", "")) : Path.Combine(Output, projectName)).ToLowerInvariant();
+                        string dir = projectName != doc.@namespace ? Path.Combine(Output, projectName, doc.@namespace.Replace($"{projectName}.", "")) : Path.Combine(Output, projectName);
                         if (!Directory.Exists(dir))
                             Directory.CreateDirectory(dir);
 

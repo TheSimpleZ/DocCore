@@ -43,7 +43,11 @@ namespace DocCore.DocProvider
 $@"{(Method as MethodDeclarationSyntax)?.Identifier.ToString() ?? "Anon"}({ParameterTypes})
 ------
 {Comment.Summary}
+
+```
 {Declaration}
+```
+
 {ParameterTable}
 {returnString}
 

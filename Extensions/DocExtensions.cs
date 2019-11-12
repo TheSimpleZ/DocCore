@@ -8,7 +8,10 @@ namespace DocCore.Extensions
 {
     public static class DocExtensions
     {
-        public static string GetDeclaration(this SyntaxNode node) => "```\n" + node.ToString().Split('\n').FirstOrDefault() + "\n```";
+        public static string GetDeclaration(this SyntaxNode node) => string.Join("\n",
+        string.Concat(node.ToString().TakeWhile(c => c != '{'))
+        .Split('\n')
+        .Select(l => l.Trim())).Trim();
 
 
         public static bool IsPublic(dynamic classNode)

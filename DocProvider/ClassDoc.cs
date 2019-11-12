@@ -11,7 +11,7 @@ namespace DocCore.DocProvider
         {
             ClassName = node.Identifier.ToString();
             Namespace = GetNamespace(node).Name.ToString();
-            Constructors = node.Members.OfType<ConstructorDeclarationSyntax>().Where(DocExtensions.IsPublic).Select(ctor => new DocComment(ctor));
+            Constructors = node.Members.OfType<ConstructorDeclarationSyntax>().Where(DocExtensions.IsPublic).Select(ctor => new ConstructorDoc(ctor));
             Methods = node.Members.OfType<MethodDeclarationSyntax>().Where(DocExtensions.IsPublic).Select(ctor => new MethodDoc(ctor));
             Properties = node.Members.OfType<PropertyDeclarationSyntax>().Where(DocExtensions.IsPublic).Select(ctor => new PropertyDoc(ctor));
         }
@@ -22,7 +22,7 @@ namespace DocCore.DocProvider
         public string ClassName { get; set; }
 
 
-        public IEnumerable<DocComment> Constructors { get; set; } = Enumerable.Empty<DocComment>();
+        public IEnumerable<ConstructorDoc> Constructors { get; set; } = Enumerable.Empty<ConstructorDoc>();
         public IEnumerable<PropertyDoc> Properties { get; set; } = Enumerable.Empty<PropertyDoc>();
         public IEnumerable<MethodDoc> Methods { get; set; } = Enumerable.Empty<MethodDoc>();
 
@@ -38,15 +38,22 @@ $@"{ClassName}
 
 {Comment.Summary}
 
-
+```
 {Declaration}
+```
 
+{(Constructors.Any() ? "## Constructors" : string.Empty)}
 
 {string.Join("\n", Constructors)}
 
+{(Properties.Any() ? "## Properties" : string.Empty)}
+
 {string.Join("\n", Properties)}
 
+{(Methods.Any() ? "## Methods" : string.Empty)}
+
 {string.Join("\n", Methods)}
+
 ");
         }
 
