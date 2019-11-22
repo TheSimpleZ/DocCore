@@ -48,6 +48,7 @@ $@"{ClassName}
                 if (docs.Any())
                 {
                     builder.AppendLine($"## {title}");
+                    builder.AppendLine();
                     builder.AppendJoin("\n", docs);
                     builder.AppendLine();
                 }
