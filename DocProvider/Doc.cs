@@ -58,12 +58,16 @@ namespace DocCore.DocProvider
             get
             {
 
-                var builder = new StringBuilder("### Parameters\n");
-                builder.AppendLine("Name | Description");
-                builder.AppendLine("--- | ---");
-                foreach (var (paramName, description) in Comment.Parameters)
+                var builder = new StringBuilder();
+                if (Comment.Parameters.Any())
                 {
-                    builder.AppendLine($"{paramName} | {description}");
+                    builder.AppendLine("### Parameters\n");
+                    builder.AppendLine("Name | Description");
+                    builder.AppendLine("--- | ---");
+                    foreach (var (paramName, description) in Comment.Parameters)
+                    {
+                        builder.AppendLine($"{paramName} | {description}");
+                    }
                 }
                 return builder.ToString();
             }
