@@ -41,6 +41,7 @@ $@"{ClassName}
 ```
 {Declaration}
 ```
+
 ");
 
             void GenerateSection(IEnumerable<Doc> docs, string title)
