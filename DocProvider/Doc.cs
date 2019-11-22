@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using DocCore.Extensions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Serilog;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
@@ -41,11 +42,31 @@ namespace DocCore.DocProvider
                 {
                     comment = new Deserializer().Deserialize<CommentDocs>(fullComment);
                 }
+                catch (YamlException e) when (fullComment.StartsWith("// Summary:"))
+                {
+                    Log.Error(e, "Could not parse yaml");
+                }
                 catch (YamlException)
                 { }
             }
 
             return comment;
+        }
+
+        protected string ParameterTable
+        {
+            get
+            {
+
+                var builder = new StringBuilder("### Parameters\n");
+                builder.AppendLine("Name | Description");
+                builder.AppendLine("--- | ---");
+                foreach (var (paramName, description) in Comment.Parameters)
+                {
+                    builder.AppendLine($"{paramName} | {description}");
+                }
+                return builder.ToString();
+            }
         }
     }
 }

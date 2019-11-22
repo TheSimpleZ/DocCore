@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using DocCore.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -28,10 +29,9 @@ namespace DocCore.DocProvider
 
         private NamespaceDeclarationSyntax GetNamespace(ClassDeclarationSyntax node) => node.Ancestors().OfType<NamespaceDeclarationSyntax>().Single();
 
-
         public override string ToString()
         {
-            return (
+            var builder = new StringBuilder(
 $@"{ClassName}
 ======
 > Namespace: {Namespace}
@@ -41,20 +41,29 @@ $@"{ClassName}
 ```
 {Declaration}
 ```
-
-{(Constructors.Any() ? "## Constructors" : string.Empty)}
-
-{string.Join("\n", Constructors)}
-
-{(Properties.Any() ? "## Properties" : string.Empty)}
-
-{string.Join("\n", Properties)}
-
-{(Methods.Any() ? "## Methods" : string.Empty)}
-
-{string.Join("\n", Methods)}
-
 ");
+
+            void GenerateSection(IEnumerable<Doc> docs, string title)
+            {
+                if (docs.Any())
+                {
+                    builder.AppendLine($"## {title}");
+                    builder.AppendJoin("\n", docs);
+                    builder.AppendLine();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(ParameterTable))
+            {
+                builder.AppendLine(ParameterTable);
+                builder.AppendLine();
+            }
+
+            GenerateSection(Constructors, nameof(Constructors));
+            GenerateSection(Properties, nameof(Properties));
+            GenerateSection(Methods, nameof(Methods));
+
+            return builder.ToString();
         }
 
     }

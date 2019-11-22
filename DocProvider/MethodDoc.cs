@@ -17,25 +17,6 @@ namespace DocCore.DocProvider
 
         public string ParameterTypes => string.Join(", ", Method.ParameterList.Parameters.Select(p => p.Type.ToString()));
 
-
-        protected string ParameterTable
-        {
-            get
-            {
-                if (!Method.ParameterList.Parameters.Any())
-                    return "";
-
-                var builder = new StringBuilder("### Parameters\n");
-                builder.AppendLine("Name | Description");
-                builder.AppendLine("--- | ---");
-                foreach (var param in Method.ParameterList.Parameters)
-                {
-                    builder.AppendLine($"{param.Identifier} | {Comment.Parameters?[param.Identifier.ToString()]}");
-                }
-                return builder.ToString();
-            }
-        }
-
         public override string ToString()
         {
             var returnString = string.IsNullOrEmpty(Comment.Returns) ? "" : $"**Returns:** {Comment.Returns}";
