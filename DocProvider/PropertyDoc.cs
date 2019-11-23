@@ -15,7 +15,7 @@ namespace DocCore.DocProvider
         public override string ToString()
         {
             return
-$@"###{Prop.Identifier}
+$@"### {Prop.Identifier}
 
 {Comment.Summary}
 

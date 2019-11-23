@@ -21,7 +21,7 @@ namespace DocCore.DocProvider
         {
             var returnString = string.IsNullOrEmpty(Comment.Returns) ? "" : $"**Returns:** {Comment.Returns}";
             return
-$@"###{(Method as MethodDeclarationSyntax)?.Identifier.ToString() ?? "Anon"}({ParameterTypes})
+$@"### {(Method as MethodDeclarationSyntax)?.Identifier.ToString() ?? "Anon"}({ParameterTypes})
 
 {Comment.Summary}
 
