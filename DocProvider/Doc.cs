@@ -26,6 +26,8 @@ namespace DocCore.DocProvider
         public string Declaration { get; }
 
 
+
+
         private static CommentDocs GetComment(CSharpSyntaxNode node)
         {
             var trivias = node.GetLeadingTrivia();
@@ -33,24 +35,45 @@ namespace DocCore.DocProvider
 
             var commentWithoutLeadingSlashes = commentTrivia.Select(c => Regex.Replace(c.ToString(), @"^//\s?", ""));
 
-            var fullComment = string.Join("\n", commentWithoutLeadingSlashes);
 
-            var comment = new CommentDocs() { Summary = fullComment };
-            if (!string.IsNullOrEmpty(fullComment))
-            {
-                try
-                {
-                    comment = new Deserializer().Deserialize<CommentDocs>(fullComment);
-                }
-                catch (YamlException e) when (fullComment.StartsWith("// Summary:"))
-                {
-                    Log.Error(e, "Could not parse yaml");
-                }
-                catch (YamlException)
-                { }
-            }
+            var fullComment = commentWithoutLeadingSlashes
+                                .DefaultIfEmpty(string.Empty)
+                                .Aggregate((a, b) => AdjustNewlinesAndDots(a, b));
+
+            if (!fullComment.EndsWith("."))
+                fullComment = fullComment + ".";
+
+            TryDeserializeYaml(fullComment, out var comment);
 
             return comment;
+        }
+
+        private static bool TryDeserializeYaml(string yamlString, out CommentDocs comment)
+        {
+            try
+            {
+                comment = new Deserializer().Deserialize<CommentDocs>(yamlString);
+                return true;
+            }
+            catch (YamlException e) when (yamlString.StartsWith("// Summary:"))
+            {
+                Log.Error(e, "Could not parse yaml");
+            }
+            catch (YamlException)
+            { }
+
+            comment = new CommentDocs() { Summary = yamlString };
+            return false;
+        }
+
+        // Add newlines and dots depending on what the first string (a) ends with.
+        private static string AdjustNewlinesAndDots(string a, string b)
+        {
+            return string.IsNullOrWhiteSpace(a)
+                    ? a + b
+                    : a.EndsWith(".")
+                        ? $"{a}\n{b}"
+                        : $"{a}.\n{b}";
         }
 
         protected string ParameterTable
