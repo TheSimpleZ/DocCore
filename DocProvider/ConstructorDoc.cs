@@ -21,7 +21,7 @@ $@"{Ctor.Identifier}({ParameterTypes})
 ------
 {Comment.Summary}
 
-```
+```csharp
 {Declaration}
 ```
 

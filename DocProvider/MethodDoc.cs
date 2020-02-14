@@ -25,7 +25,7 @@ $@"### {(Method as MethodDeclarationSyntax)?.Identifier.ToString() ?? "Anon"}({P
 
 {Comment.Summary}
 
-```
+```csharp
 {Declaration}
 ```
 

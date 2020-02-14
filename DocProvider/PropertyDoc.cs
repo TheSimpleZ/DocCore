@@ -19,7 +19,7 @@ $@"### {Prop.Identifier}
 
 {Comment.Summary}
 
-```
+```csharp
 {Declaration}
 ```
 
