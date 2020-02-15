@@ -35,21 +35,31 @@ namespace DocCore.DocProvider
 
             var commentWithoutLeadingSlashes = commentTrivia.Select(c => Regex.Replace(c.ToString(), @"^//\s?", ""));
 
+            if (TryDeserializeYaml(string.Join("\n", commentWithoutLeadingSlashes), out var comment))
+            {
+                return comment;
+            }
+            else
+            {
+                var fullComment = commentWithoutLeadingSlashes
+                                    .DefaultIfEmpty(string.Empty)
+                                    .Aggregate((a, b) => AdjustNewlinesAndDots(a, b));
 
-            var fullComment = commentWithoutLeadingSlashes
-                                .DefaultIfEmpty(string.Empty)
-                                .Aggregate((a, b) => AdjustNewlinesAndDots(a, b));
+                if (!string.IsNullOrWhiteSpace(fullComment) && !fullComment.EndsWith("."))
+                    fullComment = fullComment + ".";
 
-            if (!fullComment.EndsWith("."))
-                fullComment = fullComment + ".";
+                return new CommentDocs() { Summary = fullComment };
+            }
 
-            TryDeserializeYaml(fullComment, out var comment);
-
-            return comment;
         }
 
         private static bool TryDeserializeYaml(string yamlString, out CommentDocs comment)
         {
+            comment = default;
+
+            if (string.IsNullOrWhiteSpace(yamlString))
+                return false;
+
             try
             {
                 comment = new Deserializer().Deserialize<CommentDocs>(yamlString);
@@ -62,7 +72,6 @@ namespace DocCore.DocProvider
             catch (YamlException)
             { }
 
-            comment = new CommentDocs() { Summary = yamlString };
             return false;
         }
 

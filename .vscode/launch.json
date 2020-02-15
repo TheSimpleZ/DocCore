@@ -10,7 +10,16 @@
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/bin/Debug/netcoreapp3.0/DocCore.dll",
-      "args": ["-o", "${workspaceFolder}/docs"],
+      "args": [
+        "-o",
+        "${workspaceFolder}/docs",
+        "-e",
+        "*Template*",
+        "-e",
+        "*Sample*",
+        "-e",
+        "*Test*"
+      ],
       "cwd": "${workspaceFolder}/../ServiceBlock",
       "console": "internalConsole",
       "stopAtEntry": false
